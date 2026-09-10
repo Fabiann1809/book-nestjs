@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 
 
 enum PayMethod {
@@ -66,15 +66,48 @@ export class OrdersController {
                 msg: 'No existe el ID',
             }
         }
+        return {
+            msg: 'Pedido encontrado',
+            data
+        }
     } 
     @Get('search/:payMethod')
     getOrderByPayMethod(@Param('payMethod') payMethod: PayMethod){
+        if (!Object.values(PayMethod).includes(payMethod)) {
+        return {
+            msg: 'Método de pago no válido',
+            availableMethods: Object.values(PayMethod)
+        };
+    }
         const data = this.orders.filter((order)=> order.payMethod === payMethod);
     return {
             payMethod,
             data
         }    
     };
+
+    @Post()
+    createOrder(@Body()order: Order){
+        console.log('.:: order', order);
+        this.orders.push(order);
+        return {
+            msg: 'pedido creado correctamente',
+            order
+        }
+    }
+    @Delete(':id')
+    deleteOrder(@Param('id') id : string){
+        const position = this.orders.findIndex((order)=> order.id === id);
+        if(position === -1){
+            return{
+                msg: 'No existe el ID de pedido'
+            }
+        }
+        this.orders.splice(position, 1);
+        return {
+            msg: 'Pedido eliminado correctamente'
+        }
+    }
         
 }
 
