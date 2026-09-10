@@ -53,7 +53,7 @@ export class OrdersController {
         }
     ]
     @Get()
-    getOrder(): Order[] {
+    getOrders(): Order[] {
         return this.orders;
     }
     @Get(':id')
