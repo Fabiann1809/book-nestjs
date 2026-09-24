@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put } from '@nestjs/common';
+import { CreateUserDto } from './user.dto';
 
 interface User {
     id: string;
@@ -66,47 +67,79 @@ export class UsersController {
     @Get(':id')
     getUserByid(@Param('id')id: string) {
         console.log('.:: UserID', id);
-        const data = this.users.find((user)=> user.id === id);
-        console.log('.:: data:', data);
-        if(data === undefined){
-            return{
-                msg: 'No existe el ID',
-                data
-            }
+        const user = this.users.find((user)=> user.id === id);
+        console.log('.:: data:', user);
+        if(user === undefined){
+            // simulacion de usuario no encontrado; error 404
+            throw new NotFoundException('usuario con id ' + id + ' no existe');
         }
-        return {
-            msg: 'Usuario encontrado',
-            data
-        };
     }
     @Get('search/:name')
     getUserbyName(@Param('name') name: string){
         const data = this.users.find((user)=> user.name === name);
         if(!data) {
-            return{
-                msg: 'Nombre no encontrado'
-            }
+    // simulacion de  nombre de usuario no encontrado; error 404
+            throw new NotFoundException('usuario con nombre ' + name + ' no existe');
         }
         return {
             data: data?.email
         };
     }
     @Post()
-    createUser(@Body() user: User) {
-        console.log('.:: user:', user)
-        this.users.push(user);
-        return {
-            msg: 'usuario creado correctamente',
-            data: user
+    createUser(@Body() userPayload: CreateUserDto) {
+        console.log('.:: user:', userPayload)
+        const newUser = {
+            ...userPayload,
+            id: `${new Date().getTime()}`, 
         }
+        this.users.push(newUser);
+        return {
+            msg: 'Usuario creado correctamente',
+            data: newUser
+        };
+        // // valido que el corro no este vacio
+        // if(userPayload.email.trim()=== ""){
+        //     throw new BadRequestException('El correo no puede estar vacio');
+        // }
+        // //valido que el correo tiene el formato correcto
+        // if(userPayload.email.includes("@") === false ){
+        //     throw new BadRequestException('El correo ' + userPayload.email +'  no tiene el formato correcto');
+        // }
     }
     @Delete(':id')
     deletedeleteUser(@Param('id') id: string) {
         const position = this.users.findIndex((user)=> user.id === id);
+        if (position === -1){
+              // simulacion de usuario no encontrado; error 404
+            throw new NotFoundException('usuario con id ' + id + ' no existe');
+        }
         this.users.splice(position, 1)
         return {
             msg: 'Usuario eliminado correctamente'
         }
+    }
+    @Put(":id")
+    updateUser(@Param("id") id: string, @Body() changes: User) {
+        console.log(".:: ID usuario: ", id);
+        console.log(".:: Cambios: ", changes);
+
+        const position = this.users.findIndex((user) => user.id === id);
+        if (position === -1) {
+            // simulacion de usuario no encontrado; error 404
+            throw new NotFoundException('usuario con id ' + id + ' no existe');
+        }
+        const currentData = this.users[position];
+        const updateUser = {
+            ...currentData,
+            ...changes
+        };
+
+        this.users[position] = updateUser;
+
+        return {
+            msg: "Usuario actualizado",
+            data: updateUser
+        };
     }
 }   
 
